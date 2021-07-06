@@ -2,17 +2,25 @@
 
 一个前端国际化的js库，不依赖于任何其他库，采用原生js编写
 
+## 规定与数据格式
 
+国际化对象：通过new 的方式创建的 i18n对象
 
-## 规定
+```js
+var i18n = new i18n();
+```
 
-国际化对象：指的是请求获取到的国际化json文件转为的js对象，转换后的js对象结构如下
+国际化数据对象：指的是请求获取到的国际化json文件转为的js对象，转换后的js对象结构如下
 
 ```js
 var i18nObj = {
-	user:{
-		name:"zhangsan",
-		age:20
+	title:{
+		username:"用户名",
+		password:"密码"
+	},
+	input:{
+		username:"请输入用户名",
+		password:"请输入密码"
 	}
 }
 ```
@@ -21,14 +29,18 @@ var i18nObj = {
 
 ```json
 {
-	"user":{
-		"name":"zhangsan",
-		"age":20
+	"title":{
+		"username":"用户名",
+		"password":"密码"
+	},
+	"input":{
+		"username":"请输入用户名",
+		"password":"请输入密码"
 	}
 }
 ```
 
-
+国际化语言：指的是如 'zh_CN','en_US'这样的字符串，可以是手动指定的，也可以是从cookie中读取到的
 
 
 
@@ -53,10 +65,10 @@ springmvc.xml配置文件
 
 ### 目录结构和资源
 
-​	i18n.js
-​    i18n_en_US.json
-​    i18n_zh_CN.json
-​    index.html
+- i18n.js
+-  i18n_en_US.json
+- i18n_zh_CN.json
+- index.html
 
 ### 国际化资源
 
@@ -90,38 +102,44 @@ i18n_zh_CN.json
 <!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Document</title>
-    <base href="../">
+<meta charset="UTF-8">
 </head>
 <body>
-    <button onclick="changeLocale('zh_CN')">中文 test.do</button>
-    <button onclick="changeLocale('en_US')">English test.do</button>
-    
-    <span class="i18n" i18nkey='user.name' i18ntarget='inner'></span>
-    <span class="i18n" i18nkey='user.age' i18ntarget='inner'></span>
-    <input type="text" class="i18n" i18nkey='user.password' i18ntarget='placeholder'/>
-    </body>
-</html>
-<!--引入国际化js库-->
-<script src="lib/util/i18n.js"></script>
-<script>
-    //调用i18nFromAjax(),渲染页面完成国际化
-	i18nFromAjax({
-		url:'test/i18n_{lang}.json',
-		className:'i18n'
-	})
+	<button onclick="changeLocale('zh_CN')">中文 test.do</button>
+	<button onclick="changeLocale('en_US')">English test.do</button><br />
 	
-    //通过携带 locale 请求参数来切换国际化语言，并刷新页面
+
+	<span class="i18n" i18nkey='title.username' i18ntarget='inner'></span>
+	<input type="text" class="i18n" i18nkey='input.username' i18ntarget='placeholder'/><br />
+	
+	<span class="i18n" i18nkey='title.password' i18ntarget='inner'></span>
+	<input type="text" class="i18n" i18nkey='input.password' i18ntarget='placeholder'/><br />
+</body>
+</html>
+<script src="../source/i18n.js"></script>
+<script>
+	//创建国际化对象
+	var i18n = new i18n();
+	//获取国际化数据对象
+	var data = i18n.getI18nDataFromAjax({
+		url:'../demo/i18n_{lang}.json'
+	})
+	//渲染页面
+	i18n.render({});
+	
 	function changeLocale(locale) {
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				window.location.reload();
-			}
-		}
-		xhr.open("GET", 'test2.do?locale='+locale, false);
-		xhr.send();
+		//通过携带 locale 请求参数来切换国际化语言，并刷新页面（需要配合后端springmvc 的 基于cookie方式的国际化）
+		// var xhr = new XMLHttpRequest();
+		// xhr.onreadystatechange = function() {
+		// 	if (xhr.readyState == 4 && xhr.status == 200) {
+		// 		window.location.reload();
+		// 	}
+		// }
+		// xhr.open("GET", 'test2.do?locale='+locale, false);
+		// xhr.send();
+		
+		//通过更改本地国际化语言cookie的值
+		document.cookie='org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE='+locale;
 	}
 </script>
 ```
@@ -144,30 +162,26 @@ i18n_zh_CN.json
 
 
 
-## 库函数
+## 对象的函数
 
-### i18nFromAjax()
+### getI18nDataFromAjax()
 
-从指定的URL获取国际化json文件，并渲染到页面，将页面进行国际化
+从指定的URL获取国际化json文件，解析为js对象（国际化数据对象），存储到当前对象中并返回
 
 ```javascript
-var i18nObj = i18nFromAjax({
+i18n.getI18nDataFromAjax({
     url:'test/i18n_{lang}.json',
     locale:'zh_CN',
-    className:'i18n',
-    asyn:false,
     localeKey:'org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE'
 })
 //返回值为请求得到的国际化json转为的js对象
 ```
 
-| 属性      | 必须 | 默认值                                                       | 介绍                                                         |
-| --------- | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| url       | 是   |                                                              | 获取国际化文件的URL，如果有两个国际化json文件`i18n_zh_CN.json`和`i18n_en_US.json`，那么你的URL应该是像这样`xxx/i18n_{lang}.json`，函数会获取国际化语言，自动将`{lang}`替换掉，成为这样的URL：`xxx/i18n_zh_CN.json`或`xxx/i18n_en_US.json`，原理为：`url = url.replaceAll("{lang}", locale);` |
-| locale    | 否   | 从cookie中获取，<br>cookie中获取不到则默认为zh_CN            | 指定语言，如 `zh_CN`,`en_US`                                 |
-| className | 是   |                                                              | 要进行国际化的标签的`class`属性值                            |
-| localeKey | 否   | org.springframework.web.servlet.<br>i18n.CookieLocaleResolver.LOCALE | 指定从本地cookie中获取指定的国际化语言                       |
-| asyn      | 否   | false                                                        | 通过ajax请求国际化资源，请求是否异步，当为异步时，函数返回值会因为异步调用的关系，返回值为null |
+| 属性      | 类型   | 必须 | 默认值                                                       | 介绍                                                         |
+| --------- | ------ | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| url       | string | 是   |                                                              | 获取国际化文件的URL，如果有两个国际化json文件`i18n_zh_CN.json`和`i18n_en_US.json`，那么你的URL应该是像这样`xxx/i18n_{lang}.json`，函数会获取国际化语言，自动将`{lang}`替换掉，成为这样的URL：`xxx/i18n_zh_CN.json`或`xxx/i18n_en_US.json`，原理为：`url = url.replaceAll("{lang}", locale);` |
+| locale    | string | 否   | 从cookie中获取，<br>cookie中获取不到则默认为zh_CN            | 指定语言，如 `zh_CN`,`en_US`                                 |
+| localeKey | string | 否   | org.springframework.web.servlet.<br>i18n.CookieLocaleResolver.LOCALE | 指定从本地cookie中获取指定的国际化语言                       |
 
 国际化优先级：
 
@@ -178,41 +192,31 @@ var i18nObj = i18nFromAjax({
 
 
 
-### i18n()
+### render()
 
-已有国际化json文件对应的js对象，那么可以使用此函数将页面国际化
+将页面进行渲染（将页面进行国际化）
 
 ```javascript
-i18n({
-    data:i18nObj,
+i18n.render({
+    data:i18nData,
     className:'i18n'
 })
 ```
 
-| 属性      | 必须 | 默认 | 介绍                                                         |
-| --------- | ---- | ---- | ------------------------------------------------------------ |
-| data      | 是   |      | 一个js对象，是国际化json文件转化的js对象，当然你也可以自己创建一个js对象，这个js对象结构看起来如同json格式一样 |
-| className | 是   |      | 要进行国际化的标签的class属性值                              |
+| 属性      | 类型   | 必须 | 默认               | 介绍                                                         |
+| --------- | ------ | ---- | ------------------ | ------------------------------------------------------------ |
+| data      | object | 否   | 当前对象的i18nData | 一个js对象，是国际化json文件转化的js对象，当然你也可以自己创建一个js对象，这个js对象结构看起来如同json格式一样 |
+| className | string | 否   | i18n               | 要进行国际化的标签的class属性值                              |
 
 
 
-### getI18nData() 
+### getThisObjI18nData() 
 
-获取国际化对象，返回一个国际化对象或null
-
-- 当未指定URL时，如果已经成功执行过`i18nFromAjax()`，那么将返回在执行`i18nFromAjax()`时得到的国际化对象，原理是在执行`i18nFromAjax()`时已经将得到的国际化对象存储起来了，此时调用`getI18nData()`可以直接返回这个国际化对象 
-
-- 当指定URL时，如果已经存在了国际化对象，那么也将直接返回
-
-- 当未指定URL时，且不存在（）
+获取当前国际化对象的国际化数据对象，返回一个国际化数据对象
 
 ```javascript
-var i18nObj = getI18nData(url)
+var i18nData = i18n.getThisObjI18nData()
 ```
-
-| 熟悉 | 必须 | 默认 | 介绍                                                       |
-| ---- | ---- | ---- | ---------------------------------------------------------- |
-| url  | 否   |      | 获取国际化json文件的URL，具体介绍见 i18nFromAjax()函数介绍 |
 
 
 

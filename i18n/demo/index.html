@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+</head>
+<body>
+	<button onclick="changeLocale('zh_CN')">中文 test.do</button>
+	<button onclick="changeLocale('en_US')">English test.do</button><br />
+
+	<span class="i18n" i18nkey='title.username' i18ntarget='inner'></span>
+	<input type="text" class="i18n" i18nkey='input.username' i18ntarget='placeholder'/><br />
+	
+	<span class="i18n" i18nkey='title.password' i18ntarget='inner'></span>
+	<input type="text" class="i18n" i18nkey='input.password' i18ntarget='placeholder'/><br />
+</body>
+</html>
+<!--引入国际化js库-->
+<script src="../source/i18n.js"></script>
+<script>
+	//创建国际化对象
+	var i18n = new i18n();
+	//获取国际化数据对象
+	var data = i18n.getI18nDataFromAjax({
+		url:'../demo/i18n_{lang}.json'
+	})
+	//渲染页面
+	i18n.render({});
+	
+	
+	function changeLocale(locale) {
+		//通过携带 locale 请求参数来切换国际化语言，并刷新页面（需要配合后端springmvc 的 基于cookie方式的国际化）
+		// var xhr = new XMLHttpRequest();
+		// xhr.onreadystatechange = function() {
+		// 	if (xhr.readyState == 4 && xhr.status == 200) {
+		// 		window.location.reload();
+		// 	}
+		// }
+		// xhr.open("GET", 'test2.do?locale='+locale, false);
+		// xhr.send();
+		
+		//通过更改本地国际化语言cookie的值
+		document.cookie='org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE='+locale;
+	}
+	
+</script>

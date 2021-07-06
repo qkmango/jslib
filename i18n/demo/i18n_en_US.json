@@ -1,0 +1,10 @@
+{
+	"title":{
+		"username":"username",
+		"password":"password"
+	},
+	"input":{
+		"username":"Please enter your username",
+		"password":"Please enter your password"
+	}
+}
